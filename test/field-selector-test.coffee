@@ -12,6 +12,7 @@ describe("FieldSelector", ->
 				price       : 0.00
 				quantity    : 10
 				total_price : 0
+				array_field : [1,2,3]
 
 				delivery_address:
 					street_address : "Appe Avenue"
@@ -53,6 +54,7 @@ describe("FieldSelector", ->
 				price       : 0.00
 				quantity    : 10
 				total_price : 0
+				array_field : [1,2,3]
 			)
 		)
 

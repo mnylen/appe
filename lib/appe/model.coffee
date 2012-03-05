@@ -22,7 +22,7 @@ class FieldSelector
 					added = true
 					# Select all fields from current parent
 					for own field, value of parent
-						if typeof value != 'object'
+						if typeof value != 'object' or (value instanceof Array)
 							fieldName = if name != "" then name + "." + field else field
 							fields[fieldName] = value
 				else
