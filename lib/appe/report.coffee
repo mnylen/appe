@@ -1,46 +1,6 @@
 _               = require 'underscore'
 {FieldSelector} = require './model'
 
-class GroupBy
-    constructor: (@selector, options) ->
-        if typeof @selector == 'string'
-            @selector = new FieldSelector(@selector)
-
-        @options = _.extend(
-            fieldName : false
-            , options
-        )
-
-class Group
-    constructor: (@parent, @name) ->
-        @count    = 0
-        @children = {}
-
-    incrCount: ->
-        @count += 1
-
-    child: (name) ->
-        @children[name] ||= new Group(@, name)
-
-    toObject: ->
-        obj = { count : @count }
-
-        for own childGroupName, child of @children
-            obj.groups ||= {}
-            obj.groups[childGroupName] = child.toObject()
-
-        obj
-
-
-report = (events, options, cb) ->
-    options = normalizeOptions(options)
-    root    = new Group(null, 'ROOT')
-
-    if events.length == 0
-        cb(count : 0)
-    else
-        processNextEvent(0, events, options, cb, root)
-
 normalizeOptions = (options) ->
     # groupBy can contain string entries, GroupBy entries
     # and FieldSelector entries. These need to be normalized
@@ -64,35 +24,88 @@ normalizeOptions = (options) ->
     options
 
 
-processNextEvent = (currentIndex, events, options, cb, root) ->
-    event = events[currentIndex]
-    updateGroups(event, options, root)
+report = (events, options, cb) ->
+    options = normalizeOptions(options)
 
-    if currentIndex + 1 < events.length
-        process.nextTick (-> processNextEvent(currentIndex + 1, events, options, cb, root))
+    if events.length == 0
+        cb(count : 0)
     else
-        cb(root.toObject())
+        new Report(events, options, cb).compute()
 
-updateGroups = (event, options, root) ->
-    root.incrCount()
 
-    parents = [root]
-    i       = 0
+class Report
+    constructor: (@events, @options, @cb) ->
+        @index = 0
+        @root  = new Group(null, 'ROOT')
 
-    for group in options.groupBy
-        fields = group.selector.selectFields(event)
-        newParents = []
+    compute: ->
+        toIndex = @index + 100000
+        if toIndex >= @events.length
+            toIndex = @events.length - 1 
 
-        for own fieldName, value of fields
-            groupName = if group.options.fieldName then fieldName else value
+        for i in [@index..toIndex]
+            @.addEvent(@events[i])
 
-            for parent in parents
-                child = parent.child(groupName)
-                child.incrCount()
+        @index = toIndex + 1
+        if @index < @events.length
+            self = this
+            process.nextTick -> (self.compute()) 
+        else
+            @cb(@root.toObject())
 
-                newParents.push(child)
+    addEvent: (event) ->
+        @root.incrCount()
 
-        parents = newParents
+        parents = [@root]
+        i       = 0
+
+        for group in @options.groupBy
+            fields = group.selector.selectFields(event)
+            newParents = []
+
+            for own fieldName, value of fields
+                groupName = if group.options.fieldName then fieldName else value
+
+                for parent in parents
+                    child = parent.child(groupName)
+                    child.incrCount()
+
+                    newParents.push(child)
+
+            parents = newParents
+
+
+class Group
+    constructor: (@parent, @name) ->
+        @count    = 0
+        @children = {}
+
+    incrCount: ->
+        @count += 1
+
+    child: (name) ->
+        @children[name] ||= new Group(@, name)
+
+    toObject: ->
+        obj = { count : @count }
+
+        for own childGroupName, child of @children
+            obj.groups ||= {}
+            obj.groups[childGroupName] = child.toObject()
+
+        obj
+
+
+class GroupBy
+    constructor: (@selector, options) ->
+        if typeof @selector == 'string'
+            @selector = new FieldSelector(@selector)
+
+        @options = _.extend(
+            fieldName : false
+            , options
+        )
+
 
 module.exports =
     GroupBy : GroupBy
