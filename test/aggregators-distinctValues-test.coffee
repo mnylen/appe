@@ -16,9 +16,9 @@ describe("aggregators", ->
             distinct.update("lorem")
 
             assert.deepEqual(distinct.value(), [
-                { value : "world", count : 3 }
-                { value : "hello", count : 2 }
-                { value : "lorem", count : 1 }
+                { value : "world", frequency : 3 }
+                { value : "hello", frequency : 2 }
+                { value : "lorem", frequency : 1 }
             ])
         )
 
@@ -27,8 +27,8 @@ describe("aggregators", ->
             distinct.update(["hello", "world", "hello", "hello", "world"])
 
             assert.deepEqual(distinct.value(), [
-                { value : "hello", count : 3 }
-                { value : "world", count : 2 }
+                { value : "hello", frequency : 3 }
+                { value : "world", frequency : 2 }
             ])
         )
 
@@ -49,8 +49,8 @@ describe("aggregators", ->
             ])
 
             assert.deepEqual(distinct.value(), [
-                { value : "hello", count : 4 }
-                { value : "world", count : 3 }
+                { value : "hello", frequency : 4 }
+                { value : "world", frequency : 3 }
             ])
         )
 
@@ -59,8 +59,8 @@ describe("aggregators", ->
             distinct.update(["HELLO", "hello", "hello"])
 
             assert.deepEqual(distinct.value(), [
-                { value : "hello", count : 2}
-                { value : "HELLO", count : 1}
+                { value : "hello", frequency : 2}
+                { value : "HELLO", frequency : 1}
             ])
         )
 
@@ -69,7 +69,7 @@ describe("aggregators", ->
             distinct.update(["HELLO", "hello", "hello"])
 
             assert.deepEqual(distinct.value(), [
-                { value : "hello", count : 3 }
+                { value : "hello", frequency : 3 }
             ])
         )
 
@@ -78,9 +78,9 @@ describe("aggregators", ->
             distinct.update(["hello  ", "  hello", "hello"])
 
             assert.deepEqual(distinct.value(), [
-                { value : "hello  ", count : 1 },
-                { value : "  hello", count : 1 },
-                { value : "hello",   count : 1 }
+                { value : "hello  ", frequency : 1 },
+                { value : "  hello", frequency : 1 },
+                { value : "hello",   frequency : 1 }
             ])
         )
 
@@ -89,7 +89,7 @@ describe("aggregators", ->
             distinct.update(["hello  ", "  hello", "hello"])
 
             assert.deepEqual(distinct.value(), [
-                { value : "hello", count : 3 }
+                { value : "hello", frequency : 3 }
             ])
         )
     )

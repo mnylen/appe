@@ -18,7 +18,7 @@ distinctValues = (options) ->
         valueFrequencies[value] += 1
 
     cmpMostFrequentFirst = (a, b) ->
-        b.count - a.count
+        b.frequency - a.frequency
 
     methods =
         update: (value) ->
@@ -31,7 +31,7 @@ distinctValues = (options) ->
             values = []
 
             for own value, frequency of valueFrequencies
-                values.push({ value : value, count : frequency })
+                values.push({ value : value, frequency : frequency })
 
             values.sort(cmpMostFrequentFirst)
 
