@@ -57,7 +57,6 @@ class Report
         @root.incrCount()
 
         parents = [@root]
-        i       = 0
 
         for group in @options.groupBy
             fields = group.selector.selectFields(event)
