@@ -21,6 +21,13 @@ normalizeOptions = (options) ->
 
     options.groupBy = groupBy
 
+    # aggregators.*.valueSelector can be either string or FieldSelector.
+    # Normalize all these as FieldSelectors
+    options.aggregators ||= {}
+    for own aggregatorName, aggregatorOptions of options.aggregators
+        if typeof aggregatorOptions.valueSelector == 'string'
+            aggregatorOptions.valueSelector = new FieldSelector(aggregatorOptions.valueSelector)
+
     options
 
 
@@ -55,6 +62,7 @@ class Report
 
     addEvent: (event) ->
         @root.incrCount()
+        @.updateAggregators(event, null, @root)
 
         parents = [@root]
 
@@ -68,16 +76,29 @@ class Report
                 for parent in parents
                     child = parent.child(groupName)
                     child.incrCount()
-
+                    @.updateAggregators(event, value, child)
                     newParents.push(child)
 
             parents = newParents
 
+    updateAggregators: (event, groupValue, group) ->
+        for own aggregatorName, aggregatorOptions of @options.aggregators
+            aggregator = group.aggregator(aggregatorName, aggregatorOptions)
+
+            if aggregatorOptions.valueSelector
+                aggregatorFields = aggregatorOptions.valueSelector.selectFields(event)
+
+                for own aggregatedFieldName, aggregatedValue of aggregatorFields
+                    aggregator.update(aggregatedValue)
+            else
+                aggregator.update(groupValue)
+
 
 class Group
     constructor: (@parent, @name) ->
-        @count    = 0
-        @children = {}
+        @count       = 0
+        @children    = {}
+        @aggregators = {}
 
     incrCount: ->
         @count += 1
@@ -85,8 +106,17 @@ class Group
     child: (name) ->
         @children[name] ||= new Group(@, name)
 
+    aggregator: (name, options) ->
+        if @aggregators[name] == undefined
+            @aggregators[name] = options.aggregator(options.options)
+        
+        @aggregators[name]
+
     toObject: ->
         obj = { count : @count }
+
+        for own aggregatorName, aggregator of @aggregators
+            obj[aggregatorName] = aggregator.value()
 
         for own childGroupName, child of @children
             obj.groups ||= {}
