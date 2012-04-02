@@ -53,6 +53,22 @@ sum = (options) ->
         value: ->
             currentSum
 
+avg = (options) ->
+    total = 0.0
+    count = 0
+
+    methods =
+        update: (value) ->
+            if typeof value != 'number'
+                return
+
+            total += value
+            count += 1
+
+        value: ->
+            total / count
+
 module.exports =
     distinctValues : distinctValues
     sum            : sum
+    avg            : avg
